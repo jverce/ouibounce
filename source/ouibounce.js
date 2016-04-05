@@ -7,25 +7,12 @@ function ouibounce(el, custom_config) {
     timer        = setDefault(config.timer, 1000),
     delay        = setDefault(config.delay, 0),
     callback     = config.callback || function() {},
-    cookieExpire = setDefaultCookieExpire(config.cookieExpire) || '',
-    cookieDomain = config.cookieDomain ? ';domain=' + config.cookieDomain : '',
     cookieName   = config.cookieName ? config.cookieName : 'viewedOuibounceModal',
-    sitewide     = config.sitewide === true ? ';path=/' : '',
     _delayTimer  = null,
     _html        = document.documentElement;
 
   function setDefault(_property, _default) {
     return typeof _property === 'undefined' ? _default : _property;
-  }
-
-  function setDefaultCookieExpire(days) {
-    // transform days to milliseconds
-    var ms = days*24*60*60*1000;
-
-    var date = new Date();
-    date.setTime(date.getTime() + ms);
-
-    return "; expires=" + date.toUTCString();
   }
 
   setTimeout(attachOuiBounce, timer);
@@ -59,24 +46,8 @@ function ouibounce(el, custom_config) {
     _delayTimer = setTimeout(fire, delay);
   }
 
-  function checkCookieValue(cookieName, value) {
-    return parseCookies()[cookieName] === value;
-  }
-
-  function parseCookies() {
-    // cookies are separated by '; '
-    var cookies = document.cookie.split('; ');
-
-    var ret = {};
-    for (var i = cookies.length - 1; i >= 0; i--) {
-      var el = cookies[i].split('=');
-      ret[el[0]] = el[1];
-    }
-    return ret;
-  }
-
   function isDisabled() {
-    return checkCookieValue(cookieName, 'true') && !aggressive;
+    return localStorage.getItem(cookieName) && !aggressive;
   }
 
   // You can use ouibounce without passing an element
@@ -93,29 +64,11 @@ function ouibounce(el, custom_config) {
   function disable(custom_options) {
     var options = custom_options || {};
 
-    // you can pass a specific cookie expiration when using the OuiBounce API
-    // ex: _ouiBounce.disable({ cookieExpire: 5 });
-    if (typeof options.cookieExpire !== 'undefined') {
-      cookieExpire = setDefaultCookieExpire(options.cookieExpire);
-    }
-
-    // you can pass use sitewide cookies too
-    // ex: _ouiBounce.disable({ cookieExpire: 5, sitewide: true });
-    if (options.sitewide === true) {
-      sitewide = ';path=/';
-    }
-
-    // you can pass a domain string when the cookie should be read subdomain-wise
-    // ex: _ouiBounce.disable({ cookieDomain: '.example.com' });
-    if (typeof options.cookieDomain !== 'undefined') {
-      cookieDomain = ';domain=' + options.cookieDomain;
-    }
-
     if (typeof options.cookieName !== 'undefined') {
       cookieName = options.cookieName;
     }
 
-    document.cookie = cookieName + '=true' + cookieExpire + cookieDomain + sitewide;
+    localStorage.setItem(cookieName, true);
 
     // remove listeners
     _html.removeEventListener('mouseleave', handleMouseleave);
